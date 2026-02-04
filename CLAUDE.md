@@ -208,3 +208,334 @@ Wait for consent; never auto-create ADRs. Group related decisions (stacks, authe
 
 ## Code Standards
 See `.specify/memory/constitution.md` for code quality, testing, performance, security, and architecture principles.
+
+---
+
+## Project-Specific Configuration: Multi-User Todo Web Application
+
+### Project Overview
+Transform a console todo application into a modern multi-user web application with persistent storage using the Agentic Dev Stack workflow.
+
+**Development Approach:** Spec-Driven Development (SDD) workflow:
+1. Write specification (spec.md)
+2. Generate architectural plan (plan.md)
+3. Break into testable tasks (tasks.md)
+4. Implement via Claude Code with specialized agents
+5. Review process, prompts, and iterations
+
+**No manual coding allowed** — All implementation must go through Claude Code agents.
+
+### Technology Stack
+
+| Layer | Technology | Purpose |
+|-------|-----------|---------|
+| **Frontend** | Next.js 16+ (App Router) | React-based UI with server/client components |
+| **Backend** | Python FastAPI | RESTful API endpoints |
+| **ORM** | SQLModel | Type-safe database operations |
+| **Database** | Neon Serverless PostgreSQL | Cloud-native persistent storage |
+| **Authentication** | Better Auth | User signup/signin with JWT tokens |
+| **Development** | Claude Code + Spec-Kit Plus | Agentic spec-driven workflow |
+
+### Specialized Agent Delegation
+
+**CRITICAL:** Use specialized agents for domain-specific work. Never implement these areas directly — always delegate to the appropriate agent.
+
+#### 1. Authentication Agent (`auth-secure-specialist`)
+
+**Use for:**
+- User signup/signin flow implementation
+- Better Auth integration and configuration
+- JWT token generation and validation
+- Password hashing with bcrypt/argon2
+- Session management and token refresh
+- Secure cookie handling (httpOnly, secure, sameSite)
+- CORS/CSRF protection
+- Authentication middleware for protected routes
+
+**Authentication Flow (Better Auth + JWT):**
+```
+User logs in → Better Auth creates session + issues JWT token
+Frontend stores token → Includes in Authorization: Bearer <token> header
+Backend extracts token → Verifies signature using shared secret
+Backend decodes token → Gets user ID, email, etc.
+Backend filters data → Returns only resources belonging to authenticated user
+```
+
+**Delegation example:**
+```
+User request: "Implement user authentication"
+→ Invoke auth-secure-specialist agent to handle Better Auth setup, JWT configuration, and secure authentication flows.
+```
+
+#### 2. Frontend Agent (`nextjs-ui-specialist`)
+
+**Use for:**
+- Next.js App Router page creation (app/ directory structure)
+- Server Components and Client Components
+- Responsive UI layouts (mobile, tablet, desktop)
+- Reusable React components with TypeScript
+- Form validation and error handling
+- Client-side interactivity (useState, useEffect)
+- Loading states (loading.tsx) and error boundaries (error.tsx)
+- SEO optimization and metadata
+- Route navigation and dynamic routes
+
+**Delegation example:**
+```
+User request: "Create a todo list page with add/edit/delete functionality"
+→ Invoke nextjs-ui-specialist agent to build responsive UI components with proper App Router conventions.
+```
+
+#### 3. Database Agent (`neon-postgres-specialist`)
+
+**Use for:**
+- Neon Serverless PostgreSQL setup and configuration
+- Database schema design (users, todos, categories, etc.)
+- Table creation with proper constraints and indexes
+- Foreign key relationships
+- Database migrations with versioning
+- Connection pooling configuration
+- Query optimization and indexing strategies
+- Neon-specific features (autoscaling, branching)
+
+**Delegation example:**
+```
+User request: "Design database schema for multi-user todo app"
+→ Invoke neon-postgres-specialist agent to create normalized schema with proper indexes and relationships.
+```
+
+#### 4. Backend Agent (`fastapi-backend-specialist`)
+
+**Use for:**
+- FastAPI application structure and routing
+- RESTful API endpoint design (CRUD operations)
+- Pydantic models for request/response validation
+- SQLModel integration for database operations
+- Authentication middleware integration
+- Error handling and custom exception handlers
+- Input validation and data sanitization
+- API documentation (OpenAPI/Swagger)
+- Database query optimization
+- Dependency injection patterns
+
+**Delegation example:**
+```
+User request: "Create REST API endpoints for todo CRUD operations"
+→ Invoke fastapi-backend-specialist agent to design endpoints with proper validation, auth, and database integration.
+```
+
+### Agent Coordination Rules
+
+1. **Single Responsibility**: Each agent handles its domain exclusively
+   - Never mix authentication logic in backend agent work
+   - Never mix database schema design in frontend agent work
+   - Keep concerns separated per agent specialty
+
+2. **Sequential Dependencies**: Follow this order when building features
+   ```
+   Database Schema (DB Agent)
+   → Backend API (Backend Agent)
+   → Authentication (Auth Agent)
+   → Frontend UI (Frontend Agent)
+   ```
+
+3. **Contract-First Integration**: Agents must agree on interfaces
+   - Database agent defines schema → Backend agent uses SQLModel
+   - Backend agent defines API contracts → Frontend agent consumes them
+   - Auth agent defines JWT structure → Backend agent validates tokens
+
+4. **Agent Invocation Syntax**:
+   ```
+   Use Task tool with appropriate subagent_type:
+   - subagent_type: "auth-secure-specialist"
+   - subagent_type: "nextjs-ui-specialist"
+   - subagent_type: "neon-postgres-specialist"
+   - subagent_type: "fastapi-backend-specialist"
+   ```
+
+### Project Requirements (Basic Level)
+
+**Objective:** Implement all 5 Basic Level features as a web application
+
+1. **User Authentication**
+   - Sign up with email/password
+   - Sign in with JWT token issuance
+   - Protected routes requiring authentication
+
+2. **Todo Management (CRUD)**
+   - Create new todos
+   - Read/list todos (filtered by authenticated user)
+   - Update existing todos
+   - Delete todos
+
+3. **Data Persistence**
+   - All todos stored in Neon PostgreSQL
+   - User-specific data isolation
+   - Efficient queries with proper indexing
+
+4. **RESTful API**
+   - Standard HTTP methods (GET, POST, PUT, DELETE)
+   - Proper status codes and error responses
+   - Request/response validation
+
+5. **Responsive Frontend**
+   - Mobile-first design
+   - Works on desktop, tablet, and mobile
+   - Intuitive user interface
+
+### Security Requirements
+
+**CRITICAL:** Never compromise on these security principles:
+
+1. **Authentication & Authorization**
+   - Always verify JWT tokens on protected endpoints
+   - Match user ID in token with user ID in request URL
+   - Filter all database queries by authenticated user ID
+   - Never trust client-provided user IDs
+
+2. **Password Security**
+   - Use bcrypt or argon2 for password hashing
+   - Never store passwords in plain text
+   - Enforce minimum password requirements
+
+3. **Token Security**
+   - Use secure, httpOnly cookies for token storage
+   - Set appropriate token expiration times
+   - Implement token refresh mechanism
+   - Use strong secret keys (never hardcode)
+
+4. **Input Validation**
+   - Validate all inputs with Pydantic models
+   - Sanitize data to prevent SQL injection
+   - Protect against XSS attacks
+   - Implement rate limiting
+
+5. **Environment Variables**
+   - Store secrets in `.env` file (never commit to git)
+   - Required variables: DATABASE_URL, JWT_SECRET, BETTER_AUTH_SECRET
+   - Use different secrets for development/production
+
+### File Structure
+
+```
+todo-app/
+├── frontend/                 # Next.js application (Frontend Agent)
+│   ├── app/                 # App Router pages
+│   ├── components/          # Reusable UI components
+│   ├── lib/                 # Utilities and API clients
+│   └── public/              # Static assets
+├── backend/                 # FastAPI application (Backend Agent)
+│   ├── app/
+│   │   ├── main.py         # FastAPI app entry
+│   │   ├── models/         # SQLModel database models (DB Agent)
+│   │   ├── routers/        # API route handlers (Backend Agent)
+│   │   ├── auth/           # Authentication logic (Auth Agent)
+│   │   └── database.py     # DB connection (DB Agent)
+│   └── tests/              # Backend tests
+├── specs/                   # Feature specifications (SDD)
+│   └── <feature-name>/
+│       ├── spec.md         # Requirements
+│       ├── plan.md         # Architecture
+│       └── tasks.md        # Implementation tasks
+├── history/                 # PHRs and ADRs
+│   ├── prompts/            # Prompt History Records
+│   └── adr/                # Architecture Decision Records
+├── .env                     # Environment variables (NEVER commit)
+└── .specify/               # Spec-Kit Plus configuration
+```
+
+### Development Workflow
+
+**For every feature request:**
+
+1. **Specification Phase** (`/sp.specify`)
+   - Document user requirements in `specs/<feature>/spec.md`
+   - Clarify acceptance criteria
+   - Identify dependencies
+
+2. **Planning Phase** (`/sp.plan`)
+   - Design architecture in `specs/<feature>/plan.md`
+   - Identify which agents are needed
+   - Define API contracts and data models
+   - Suggest ADRs for significant decisions
+
+3. **Task Breakdown** (`/sp.tasks`)
+   - Generate actionable tasks in `specs/<feature>/tasks.md`
+   - Order tasks by dependencies
+   - Assign to appropriate specialized agents
+
+4. **Implementation Phase** (`/sp.implement`)
+   - Delegate tasks to specialized agents
+   - Follow TDD (Red-Green-Refactor) where applicable
+   - Verify each task completion
+
+5. **Documentation Phase**
+   - Create PHR for the session
+   - Update ADRs if architectural decisions were made
+   - Update constitution if new principles emerged
+
+### Quality Checklist
+
+Before marking any feature complete, verify:
+
+- [ ] All API endpoints are authenticated and authorized
+- [ ] Database queries filter by authenticated user ID
+- [ ] No hardcoded secrets or credentials
+- [ ] Input validation on all user-provided data
+- [ ] Error handling for all failure paths
+- [ ] Tests cover happy path and error cases
+- [ ] Frontend handles loading and error states
+- [ ] Responsive design works on mobile/tablet/desktop
+- [ ] Code follows project constitution principles
+- [ ] PHR created for the implementation session
+
+### Agent Invocation Examples
+
+**Example 1: Authentication Feature**
+```
+User: "Implement user authentication with Better Auth"
+
+Response:
+I'll delegate this to the auth-secure-specialist agent.
+
+[Invoke Task tool with subagent_type: "auth-secure-specialist"]
+```
+
+**Example 2: Database Schema**
+```
+User: "Design database schema for todos and users"
+
+Response:
+I'll delegate this to the neon-postgres-specialist agent.
+
+[Invoke Task tool with subagent_type: "neon-postgres-specialist"]
+```
+
+**Example 3: API Endpoints**
+```
+User: "Create CRUD endpoints for todos"
+
+Response:
+I'll delegate this to the fastapi-backend-specialist agent.
+
+[Invoke Task tool with subagent_type: "fastapi-backend-specialist"]
+```
+
+**Example 4: Frontend Pages**
+```
+User: "Build todo list page with add/edit/delete"
+
+Response:
+I'll delegate this to the nextjs-ui-specialist agent.
+
+[Invoke Task tool with subagent_type: "nextjs-ui-specialist"]
+```
+
+### Remember
+
+- **Never implement directly** what specialized agents should handle
+- **Always create PHRs** after completing work
+- **Always suggest ADRs** for architectural decisions
+- **Always validate security** requirements are met
+- **Always follow SDD workflow**: spec → plan → tasks → implement
+- **No manual coding** — everything through Claude Code agents

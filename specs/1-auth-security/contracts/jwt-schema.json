@@ -1,0 +1,107 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://todo-app.com/schemas/jwt-token.json",
+  "title": "JWT Token Claims",
+  "description": "Schema for JWT token claims issued by Better Auth and verified by FastAPI backend",
+  "type": "object",
+  "required": ["sub", "email", "iat", "exp"],
+  "properties": {
+    "sub": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Subject: Unique user identifier (UUID)",
+      "examples": ["550e8400-e29b-41d4-a716-446655440000"]
+    },
+    "email": {
+      "type": "string",
+      "format": "email",
+      "description": "User's email address (for display purposes, not authentication)",
+      "examples": ["user@example.com"]
+    },
+    "iat": {
+      "type": "integer",
+      "description": "Issued at: Unix timestamp (seconds since epoch) when token was created",
+      "minimum": 0,
+      "examples": [1704931200]
+    },
+    "exp": {
+      "type": "integer",
+      "description": "Expiration: Unix timestamp (seconds since epoch) when token expires (iat + 3600)",
+      "minimum": 0,
+      "examples": [1704934800]
+    },
+    "iss": {
+      "type": "string",
+      "description": "Issuer: Application identifier (optional, used for multi-app environments)",
+      "examples": ["todo-app"],
+      "default": "todo-app"
+    }
+  },
+  "additionalProperties": false,
+  "examples": [
+    {
+      "sub": "550e8400-e29b-41d4-a716-446655440000",
+      "email": "user@example.com",
+      "iat": 1704931200,
+      "exp": 1704934800,
+      "iss": "todo-app"
+    },
+    {
+      "sub": "7c9e6679-7425-40de-944b-e07fc1f90ae7",
+      "email": "admin@example.com",
+      "iat": 1704935000,
+      "exp": 1704938600
+    }
+  ],
+  "definitions": {
+    "TokenHeader": {
+      "description": "JWT header (not part of claims, but documented for completeness)",
+      "type": "object",
+      "required": ["alg", "typ"],
+      "properties": {
+        "alg": {
+          "type": "string",
+          "enum": ["HS256"],
+          "description": "Algorithm: HMAC-SHA256 symmetric signing"
+        },
+        "typ": {
+          "type": "string",
+          "enum": ["JWT"],
+          "description": "Token type: JSON Web Token"
+        }
+      }
+    }
+  },
+  "notes": {
+    "signing": {
+      "algorithm": "HS256 (HMAC-SHA256)",
+      "secret": "BETTER_AUTH_SECRET environment variable (minimum 32 characters)",
+      "library_frontend": "Better Auth (Node.js)",
+      "library_backend": "python-jose (Python)"
+    },
+    "expiration": {
+      "duration": "3600 seconds (1 hour)",
+      "calculation": "exp = iat + 3600",
+      "behavior": "Backend rejects expired tokens with 401 Unauthorized"
+    },
+    "validation": {
+      "backend_checks": [
+        "Signature verification using BETTER_AUTH_SECRET",
+        "Expiration check (current_time < exp)",
+        "Required claims presence (sub, email, iat, exp)",
+        "Claim type validation (sub is UUID, email is valid, iat/exp are integers)"
+      ],
+      "frontend_checks": [
+        "Token presence in cookie",
+        "Expiration check before API calls (optional optimization)",
+        "Redirect to /signin if 401 Unauthorized received"
+      ]
+    },
+    "security": {
+      "storage": "httpOnly, Secure, SameSite=Strict cookies (never localStorage)",
+      "transport": "Authorization: Bearer <token> header on API requests",
+      "refresh": "Not implemented in Phase 2 (user must re-authenticate after 1 hour)",
+      "revocation": "Stateless tokens cannot be revoked (rely on short expiration)"
+    }
+  }
+}

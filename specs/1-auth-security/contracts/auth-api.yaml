@@ -1,0 +1,354 @@
+openapi: 3.0.3
+info:
+  title: Authentication & Security API
+  description: |
+    RESTful API for user authentication using JWT tokens.
+    Provides registration, sign-in, and sign-out endpoints.
+  version: 1.0.0
+  contact:
+    name: API Support
+    email: support@todo-app.com
+
+servers:
+  - url: http://localhost:8000/api/v1
+    description: Local development server
+  - url: https://api.todo-app.com/api/v1
+    description: Production server
+
+tags:
+  - name: Authentication
+    description: User authentication operations (register, sign-in, sign-out)
+
+paths:
+  /auth/register:
+    post:
+      tags:
+        - Authentication
+      summary: Register a new user
+      description: |
+        Create a new user account with email and password.
+        Password is hashed using bcrypt before storage.
+        Returns user data and JWT token upon successful registration.
+      operationId: registerUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserCreate'
+            examples:
+              validRegistration:
+                summary: Valid registration
+                value:
+                  email: newuser@example.com
+                  password: securepassword123
+      responses:
+        '201':
+          description: User successfully created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenResponse'
+              examples:
+                successfulRegistration:
+                  summary: Successful registration response
+                  value:
+                    access_token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI1NTBlODQwMC1lMjliLTQxZDQtYTcxNi00NDY2NTU0NDAwMDAiLCJlbWFpbCI6Im5ld3VzZXJAZXhhbXBsZS5jb20iLCJpYXQiOjE3MDQ5MzEyMDAsImV4cCI6MTcwNDkzNDgwMH0.signature
+                    token_type: bearer
+                    user:
+                      id: 550e8400-e29b-41d4-a716-446655440000
+                      email: newuser@example.com
+                      created_at: 2026-01-11T12:00:00Z
+        '400':
+          description: Invalid input or email already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                emailExists:
+                  summary: Email already registered
+                  value:
+                    detail: Unable to create account. Please try a different email.
+                invalidEmail:
+                  summary: Invalid email format
+                  value:
+                    detail: Invalid email format
+                shortPassword:
+                  summary: Password too short
+                  value:
+                    detail: Password must be at least 8 characters long
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/signin:
+    post:
+      tags:
+        - Authentication
+      summary: Sign in an existing user
+      description: |
+        Authenticate user with email and password.
+        Returns JWT token on successful authentication.
+        Token expires after 1 hour (3600 seconds).
+      operationId: signinUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserLogin'
+            examples:
+              validLogin:
+                summary: Valid sign-in
+                value:
+                  email: user@example.com
+                  password: securepassword123
+      responses:
+        '200':
+          description: Authentication successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenResponse'
+              examples:
+                successfulSignin:
+                  summary: Successful sign-in response
+                  value:
+                    access_token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI1NTBlODQwMC1lMjliLTQxZDQtYTcxNi00NDY2NTU0NDAwMDAiLCJlbWFpbCI6InVzZXJAZXhhbXBsZS5jb20iLCJpYXQiOjE3MDQ5MzEyMDAsImV4cCI6MTcwNDkzNDgwMH0.signature
+                    token_type: bearer
+                    user:
+                      id: 550e8400-e29b-41d4-a716-446655440000
+                      email: user@example.com
+                      created_at: 2026-01-10T08:30:00Z
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                invalidCredentials:
+                  summary: Invalid email or password
+                  value:
+                    detail: Invalid credentials
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/signout:
+    post:
+      tags:
+        - Authentication
+      summary: Sign out current user
+      description: |
+        Sign out the authenticated user by clearing the JWT token cookie.
+        Frontend should clear local token storage and redirect to sign-in page.
+      operationId: signoutUser
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Successfully signed out
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Successfully signed out
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                notAuthenticated:
+                  summary: No valid token provided
+                  value:
+                    detail: Authentication required
+
+  /auth/me:
+    get:
+      tags:
+        - Authentication
+      summary: Get current user
+      description: |
+        Retrieve the currently authenticated user's information.
+        Requires valid JWT token.
+      operationId: getCurrentUser
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Current user information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+              examples:
+                currentUser:
+                  summary: Current user response
+                  value:
+                    id: 550e8400-e29b-41d4-a716-446655440000
+                    email: user@example.com
+                    created_at: 2026-01-10T08:30:00Z
+        '401':
+          description: Invalid or expired token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                expiredToken:
+                  summary: Token expired
+                  value:
+                    detail: Token expired. Please sign in again.
+                invalidToken:
+                  summary: Invalid token
+                  value:
+                    detail: Could not validate credentials
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token obtained from /auth/register or /auth/signin
+
+  schemas:
+    UserCreate:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          description: User's email address (must be unique)
+          example: newuser@example.com
+        password:
+          type: string
+          format: password
+          minLength: 8
+          description: User's password (minimum 8 characters)
+          example: securepassword123
+
+    UserLogin:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          description: User's email address
+          example: user@example.com
+        password:
+          type: string
+          format: password
+          description: User's password
+          example: securepassword123
+
+    UserResponse:
+      type: object
+      required:
+        - id
+        - email
+        - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique user identifier
+          example: 550e8400-e29b-41d4-a716-446655440000
+        email:
+          type: string
+          format: email
+          description: User's email address
+          example: user@example.com
+        created_at:
+          type: string
+          format: date-time
+          description: Account creation timestamp (ISO 8601)
+          example: 2026-01-11T12:00:00Z
+
+    TokenResponse:
+      type: object
+      required:
+        - access_token
+        - token_type
+        - user
+      properties:
+        access_token:
+          type: string
+          description: JWT access token (valid for 1 hour)
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+        token_type:
+          type: string
+          enum: [bearer]
+          description: Token type (always "bearer")
+          example: bearer
+        user:
+          $ref: '#/components/schemas/UserResponse'
+
+    ErrorResponse:
+      type: object
+      required:
+        - detail
+      properties:
+        detail:
+          type: string
+          description: Error message
+          example: Invalid credentials
+
+    ValidationError:
+      type: object
+      required:
+        - detail
+      properties:
+        detail:
+          type: array
+          items:
+            type: object
+            properties:
+              loc:
+                type: array
+                items:
+                  type: string
+                description: Location of the error (field path)
+                example: ["body", "email"]
+              msg:
+                type: string
+                description: Error message
+                example: value is not a valid email address
+              type:
+                type: string
+                description: Error type
+                example: value_error.email
+
+security:
+  - BearerAuth: []
