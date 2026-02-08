@@ -26,7 +26,7 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (tasks) {
-      const completed = tasks.filter(task => task.is_completed).length;
+      const completed = tasks.filter(task => task.status === 'completed').length;
       const pending = tasks.length - completed;
       const today = tasks.filter(task => {
         const todayDate = new Date().toISOString().split('T')[0];
@@ -160,11 +160,11 @@ export default function DashboardPage() {
                   >
                     <div className="flex items-center space-x-3">
                       <div className={`p-1 rounded-full ${
-                        task.is_completed
+                        task.status === 'completed'
                           ? 'bg-emerald-900/30'
                           : 'bg-amber-900/30'
                       }`}>
-                        {task.is_completed ? (
+                        {task.status === 'completed' ? (
                           <CheckCircle className="w-4 h-4 text-emerald-400" />
                         ) : (
                           <Circle className="w-4 h-4 text-amber-400" />
@@ -178,11 +178,11 @@ export default function DashboardPage() {
                       </div>
                     </div>
                     <span className={`px-2 py-1 text-xs rounded-full ${
-                      task.is_completed
+                      task.status === 'completed'
                         ? 'bg-emerald-900/30 text-emerald-400'
                         : 'bg-amber-900/30 text-amber-400'
                     }`}>
-                      {task.is_completed ? 'Completed' : 'Pending'}
+                      {task.status === 'completed' ? 'Completed' : 'Pending'}
                     </span>
                   </motion.div>
                 ))
