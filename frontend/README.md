@@ -1,65 +1,83 @@
-# Todo App - Frontend
+# Todo App Frontend
 
-Next.js 15+ application with Better Auth authentication.
+A responsive Next.js frontend for the Todo application with secure API integration.
 
-## Setup
+## Features
 
-### 1. Install dependencies
-```bash
-cd frontend
-npm install
-```
+- **Authentication**: Secure login and signup with JWT token management
+- **Task Management**: Create, read, update, and delete tasks
+- **Responsive Design**: Works on mobile, tablet, and desktop
+- **Loading States**: Visual feedback during API operations
+- **Error Handling**: Proper error messages and recovery
 
-### 2. Configure environment
-```bash
-cp .env.local.example .env.local
-# Edit .env.local with your API URL and BETTER_AUTH_SECRET
-```
+## Tech Stack
 
-### 3. Start development server
+- Next.js 14+ (App Router)
+- React 18+
+- TypeScript
+- Tailwind CSS
+- Better Auth client
+
+## Getting Started
+
+### Prerequisites
+
+- Node.js 18+
+- npm or yarn
+
+### Installation
+
+1. Clone the repository
+2. Install dependencies:
+   ```bash
+   cd frontend
+   npm install
+   ```
+3. Create environment variables:
+   ```bash
+   cp .env.local.example .env.local
+   ```
+4. Update the environment variables in `.env.local` with your backend API URL
+
+### Development
+
 ```bash
 npm run dev
 ```
 
-Open http://localhost:3000
+The application will be available at `http://localhost:3000`.
+
+## Environment Variables
+
+- `NEXT_PUBLIC_API_BASE_URL`: Base URL of the backend API (e.g., `http://localhost:8000`)
 
 ## Project Structure
 
 ```
 frontend/
-├── app/
-│   ├── (auth)/
-│   │   ├── signup/
-│   │   │   └── page.tsx    # Registration page
-│   │   └── signin/
-│   │       └── page.tsx    # Sign-in page
-│   ├── dashboard/
-│   │   └── page.tsx        # Protected dashboard
-│   ├── layout.tsx          # Root layout
-│   └── page.tsx            # Landing page
-├── components/
-│   ├── auth/
-│   │   ├── SignupForm.tsx  # Registration form
-│   │   ├── SigninForm.tsx  # Sign-in form
-│   │   └── SignoutButton.tsx  # Sign-out button
-│   └── ui/
-│       ├── Button.tsx      # Reusable button
-│       └── Input.tsx       # Reusable input
-└── lib/
-    ├── auth.ts             # Better Auth configuration
-    └── api-client.ts       # API client with JWT
+├── app/                    # Next.js App Router pages
+│   ├── (auth)/            # Authentication pages
+│   ├── tasks/             # Tasks page
+│   └── layout.tsx         # Root layout
+├── components/            # Reusable UI components
+│   ├── auth/              # Authentication components
+│   ├── tasks/             # Task management components
+│   ├── ui/                # Generic UI components
+│   └── providers/         # Context providers
+├── lib/                   # Utility functions and services
+│   ├── api/               # API client and services
+│   └── utils/             # Utility functions
+├── hooks/                 # Custom React hooks
+└── public/                # Static assets
 ```
 
-## Environment Variables
+## API Integration
 
-- `NEXT_PUBLIC_API_URL`: Backend API base URL
-- `BETTER_AUTH_SECRET`: JWT secret (must match backend)
-- `DATABASE_URL`: PostgreSQL connection (for Better Auth)
+The frontend communicates with the backend API using JWT authentication. All API requests automatically include the JWT token in the Authorization header.
 
-## Authentication Flow
+## Security
 
-1. User registers → Backend creates account → JWT issued
-2. User signs in → Backend validates → JWT issued
-3. Frontend stores JWT in httpOnly cookie
-4. Protected routes check JWT → Redirect to signin if missing
-5. API requests include Authorization header with JWT
+- JWT tokens are securely stored in localStorage
+- All API requests are authenticated with JWT tokens
+- Input validation is performed on both frontend and backend
+- User data isolation is enforced by the backend

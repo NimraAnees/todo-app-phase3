@@ -58,6 +58,14 @@ class User(SQLModel, table=True):
         description="Unique user identifier (UUID)",
     )
 
+    # User's display name
+    name: Optional[str] = Field(
+        default=None,
+        max_length=255,
+        nullable=True,
+        description="User's display name",
+    )
+
     # Email: unique identifier for authentication
     email: str = Field(
         sa_column_kwargs={"unique": True},

@@ -1,0 +1,360 @@
+openapi: 3.0.3
+info:
+  title: AI Chat Agent API
+  description: API for the AI Chat Agent & Conversation System
+  version: 1.0.0
+servers:
+  - url: http://localhost:8000
+    description: Development server
+
+paths:
+  /api/{user_id}/chat:
+    post:
+      summary: Send a message to the AI chat agent
+      description: Process natural language input from a user and return AI-generated response
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          description: The ID of the authenticated user
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChatRequest'
+      responses:
+        '200':
+          description: Successful response from the AI agent
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatResponse'
+        '400':
+          description: Invalid request or malformed input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized - invalid or missing JWT token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden - attempting to access another user's resources
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      security:
+        - bearerAuth: []
+
+  /api/{user_id}/conversations:
+    get:
+      summary: Get user's conversation history
+      description: Retrieve a list of user's conversations with pagination
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          description: The ID of the authenticated user
+          schema:
+            type: string
+            format: uuid
+        - name: limit
+          in: query
+          required: false
+          description: Number of conversations to return (default 10)
+          schema:
+            type: integer
+            default: 10
+            maximum: 100
+        - name: offset
+          in: query
+          required: false
+          description: Offset for pagination (default 0)
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: List of user's conversations
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConversationsResponse'
+        '401':
+          description: Unauthorized - invalid or missing JWT token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden - attempting to access another user's resources
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      security:
+        - bearerAuth: []
+
+  /api/{user_id}/conversations/{conversation_id}:
+    get:
+      summary: Get conversation details
+      description: Retrieve a specific conversation with its message history
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          description: The ID of the authenticated user
+          schema:
+            type: string
+            format: uuid
+        - name: conversation_id
+          in: path
+          required: true
+          description: The ID of the conversation to retrieve
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Conversation details with message history
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConversationDetailResponse'
+        '401':
+          description: Unauthorized - invalid or missing JWT token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden - attempting to access another user's resources
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Conversation not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      security:
+        - bearerAuth: []
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    ChatRequest:
+      type: object
+      required:
+        - message
+      properties:
+        message:
+          type: string
+          description: The natural language message from the user
+          example: "Add a task to buy groceries"
+        conversation_id:
+          type: string
+          format: uuid
+          description: Optional conversation ID to continue an existing conversation
+          example: "a1b2c3d4-e5f6-7890-1234-567890abcdef"
+
+    ChatResponse:
+      type: object
+      required:
+        - response
+        - conversation_id
+        - message_id
+      properties:
+        response:
+          type: string
+          description: The AI agent's response to the user's message
+          example: "I've added the task 'buy groceries' to your list."
+        conversation_id:
+          type: string
+          format: uuid
+          description: The ID of the conversation
+          example: "a1b2c3d4-e5f6-7890-1234-567890abcdef"
+        message_id:
+          type: string
+          format: uuid
+          description: The ID of the response message
+          example: "b2c3d4e5-f6g7-8901-2345-67890abcdef1"
+        tool_calls:
+          type: array
+          description: List of tools that were called during processing
+          items:
+            $ref: '#/components/schemas/ToolCallInfo'
+        context_preserved:
+          type: boolean
+          description: Whether the conversation context was preserved
+          example: true
+
+    ToolCallInfo:
+      type: object
+      properties:
+        tool_name:
+          type: string
+          description: Name of the tool that was called
+          example: "add_task_tool"
+        parameters:
+          type: object
+          description: Parameters passed to the tool
+          example: {"title": "buy groceries"}
+        result:
+          type: object
+          description: Result returned by the tool
+          example: {"task_id": "c3d4e5f6-g7h8-9012-3456-7890abcdef12"}
+
+    ErrorResponse:
+      type: object
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+          description: Error code
+          example: "INVALID_INPUT"
+        message:
+          type: string
+          description: Human-readable error message
+          example: "Invalid request format"
+        details:
+          type: object
+          description: Additional error details (optional)
+          example: {"field": "message", "reason": "required"}
+
+    ConversationsResponse:
+      type: object
+      required:
+        - conversations
+        - total_count
+      properties:
+        conversations:
+          type: array
+          items:
+            $ref: '#/components/schemas/ConversationSummary'
+        total_count:
+          type: integer
+          description: Total number of conversations available
+          example: 15
+        limit:
+          type: integer
+          description: Number of conversations returned
+          example: 10
+        offset:
+          type: integer
+          description: Offset used for pagination
+          example: 0
+
+    ConversationSummary:
+      type: object
+      required:
+        - id
+        - title
+        - started_at
+        - last_message_at
+        - message_count
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique identifier for the conversation
+          example: "a1b2c3d4-e5f6-7890-1234-567890abcdef"
+        title:
+          type: string
+          description: Auto-generated title for the conversation
+          example: "Grocery and household tasks"
+        started_at:
+          type: string
+          format: date-time
+          description: When the conversation was started
+          example: "2026-02-06T10:00:00Z"
+        last_message_at:
+          type: string
+          format: date-time
+          description: When the last message was sent
+          example: "2026-02-06T11:30:00Z"
+        message_count:
+          type: integer
+          description: Number of messages in the conversation
+          example: 8
+
+    ConversationDetailResponse:
+      type: object
+      required:
+        - conversation
+        - messages
+      properties:
+        conversation:
+          $ref: '#/components/schemas/ConversationSummary'
+        messages:
+          type: array
+          items:
+            $ref: '#/components/schemas/MessageDetail'
+
+    MessageDetail:
+      type: object
+      required:
+        - id
+        - role
+        - content
+        - timestamp
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique identifier for the message
+          example: "b2c3d4e5-f6g7-8901-2345-67890abcdef1"
+        role:
+          type: string
+          enum: [user, assistant]
+          description: Role of the message sender
+          example: "user"
+        content:
+          type: string
+          description: Content of the message
+          example: "Add a task to buy groceries"
+        timestamp:
+          type: string
+          format: date-time
+          description: When the message was sent
+          example: "2026-02-06T10:05:00Z"
+        tool_calls:
+          type: array
+          description: Tool calls made in response to this message (for assistant messages)
+          items:
+            $ref: '#/components/schemas/ToolCallInfo'

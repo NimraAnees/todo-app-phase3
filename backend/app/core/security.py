@@ -6,16 +6,10 @@ Provides:
 - Password verification with constant-time comparison
 - JWT token verification using python-jose
 """
-from passlib.context import CryptContext
+import bcrypt
 from jose import JWTError, jwt
 from fastapi import HTTPException, status
 from app.core.config import settings
-
-
-# Password hashing context using bcrypt
-# Work factor 12 provides strong security (2^12 = 4096 iterations)
-# deprecated="auto" automatically upgrades old hashes to current scheme
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
 def hash_password(password: str) -> str:
@@ -41,7 +35,11 @@ def hash_password(password: str) -> str:
         - Always validate password length before hashing
         - Bcrypt automatically generates and includes a random salt
     """
-    return pwd_context.hash(password)
+    # Generate salt with work factor 12
+    salt = bcrypt.gensalt(rounds=12)
+    # Hash the password with the salt
+    hashed = bcrypt.hashpw(password.encode('utf-8'), salt)
+    return hashed.decode('utf-8')
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
@@ -71,7 +69,7 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
         - Never log the plain_password parameter
         - Comparison is constant-time (prevents timing side-channel attacks)
     """
-    return pwd_context.verify(plain_password, hashed_password)
+    return bcrypt.checkpw(plain_password.encode('utf-8'), hashed_password.encode('utf-8'))
 
 
 def verify_token(token: str) -> dict:

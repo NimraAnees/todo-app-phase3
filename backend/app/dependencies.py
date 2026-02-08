@@ -6,7 +6,7 @@ Provides reusable dependency functions for:
 - Database session management
 """
 from fastapi import Depends, HTTPException, status
-from fastapi.security import HTTPBearer, HTTPAuthCredentials
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlmodel import Session
 from typing import Dict
 from app.core.security import verify_token
@@ -19,7 +19,7 @@ security = HTTPBearer()
 
 
 async def get_current_user(
-    credentials: HTTPAuthCredentials = Depends(security)
+    credentials: HTTPAuthorizationCredentials = Depends(security)
 ) -> Dict[str, str]:
     """
     FastAPI dependency to extract and verify current user from JWT token.
@@ -67,6 +67,13 @@ async def get_current_user(
         - JWT signature ensures user_id cannot be forged
         - Token expiration is enforced automatically (1 hour)
     """
+    if not credentials or not credentials.credentials:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="No authentication token provided",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
     token = credentials.credentials
     return verify_token(token)
 

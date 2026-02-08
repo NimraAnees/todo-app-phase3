@@ -9,6 +9,7 @@ Defines request/response models for:
 from pydantic import BaseModel, EmailStr, Field, ConfigDict
 from uuid import UUID
 from datetime import datetime
+from typing import Optional
 
 
 class UserCreate(BaseModel):
@@ -19,10 +20,12 @@ class UserCreate(BaseModel):
     Validates email format and password length at API boundary.
 
     Attributes:
+        name: User's display name (optional)
         email: User's email address (validated by EmailStr)
         password: Plain-text password (minimum 8 characters)
 
     Validation Rules:
+        - name: Optional, max 255 characters
         - email: Must be valid RFC 5322 email format
         - password: Minimum 8 characters (no maximum, bcrypt handles up to 72 bytes)
 
@@ -34,11 +37,18 @@ class UserCreate(BaseModel):
     Example Request:
         POST /api/v1/auth/register
         {
+            "name": "John Doe",
             "email": "newuser@example.com",
             "password": "securepassword123"
         }
     """
 
+    name: Optional[str] = Field(
+        default=None,
+        max_length=255,
+        description="User's display name (optional)",
+        examples=["John Doe"],
+    )
     email: EmailStr = Field(
         ...,
         description="User's email address (must be unique)",
@@ -54,6 +64,7 @@ class UserCreate(BaseModel):
     model_config = ConfigDict(
         json_schema_extra={
             "example": {
+                "name": "John Doe",
                 "email": "newuser@example.com",
                 "password": "securepassword123",
             }

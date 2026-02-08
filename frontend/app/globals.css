@@ -3,11 +3,108 @@
 @tailwind utilities;
 
 :root {
-  --foreground-rgb: 0, 0, 0;
-  --background-rgb: 255, 255, 255;
+  --foreground-rgb: 245, 245, 245;
+  --background-rgb: 10, 10, 10;
+  --surface-rgb: 18, 18, 18;
+  --elevated-rgb: 26, 26, 26;
+  --border-rgb: 42, 42, 42;
+  --emerald-500: 0, 255, 170;
+  --amber-500: 255, 204, 102;
 }
 
 body {
   color: rgb(var(--foreground-rgb));
   background: rgb(var(--background-rgb));
+}
+
+/* Black-touch theme overrides */
+body {
+  background-color: #0A0A0A !important;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0A0A0A;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #2A2A2A;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #404040;
+}
+
+/* Focus styles for accessibility */
+.focus-visible {
+  outline: 2px solid rgb(var(--emerald-500));
+  outline-offset: 2px;
+}
+
+/* Custom transitions */
+.transition-fade {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.scale-hover {
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.scale-hover:hover {
+  transform: scale(1.02);
+}
+
+/* Black-touch card styles */
+.card-black-touch {
+  background: #121212;
+  border: 1px solid #2A2A2A;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3), 0 1px 3px rgba(0, 0, 0, 0.2);
+  transition: all 0.2s ease;
+}
+
+.card-black-touch:hover {
+  box-shadow: 0 6px 30px rgba(0, 0, 0, 0.4), 0 2px 6px rgba(0, 0, 0, 0.3);
+  transform: translateY(-1px);
+}
+
+/* Emerald glow effect */
+.emerald-glow {
+  box-shadow: 0 0 15px rgba(0, 255, 170, 0.3);
+}
+
+/* Button styles */
+.btn-emerald {
+  background: linear-gradient(135deg, #00FFAA, #00E699);
+  color: #000;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.btn-emerald:hover {
+  transform: scale(1.02);
+  box-shadow: 0 0 15px rgba(0, 255, 170, 0.3);
+}
+
+.btn-outline {
+  background: transparent;
+  border: 1px solid #2A2A2A;
+  color: #00FFAA;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.btn-outline:hover {
+  background: #1A1A1A;
+  border-color: rgba(0, 255, 170, 0.3);
 }

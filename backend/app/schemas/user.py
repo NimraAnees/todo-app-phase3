@@ -6,6 +6,7 @@ Defines response models that exclude sensitive information (password_hash).
 from pydantic import BaseModel, EmailStr, Field, ConfigDict
 from uuid import UUID
 from datetime import datetime
+from typing import Optional
 
 
 class UserResponse(BaseModel):
@@ -57,6 +58,11 @@ class UserResponse(BaseModel):
         description="User's unique identifier (UUID)",
         examples=["550e8400-e29b-41d4-a716-446655440000"],
     )
+    name: Optional[str] = Field(
+        default=None,
+        description="User's display name",
+        examples=["John Doe"],
+    )
     email: EmailStr = Field(
         ...,
         description="User's email address",
@@ -73,6 +79,7 @@ class UserResponse(BaseModel):
         json_schema_extra={
             "example": {
                 "id": "550e8400-e29b-41d4-a716-446655440000",
+                "name": "John Doe",
                 "email": "user@example.com",
                 "created_at": "2026-01-11T12:00:00Z",
             }
